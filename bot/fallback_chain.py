@@ -1,7 +1,7 @@
 # fallback_chain.py
 import os
 import asyncio
-from faq_search import get_faq_answer
+from faq_search import find_best_faq
 from gpt4all import GPT4All
 import openai
 
@@ -14,6 +14,15 @@ gpt4all_model = GPT4All(
 )
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
+
+def get_fallback_answer(query: str) -> str:
+    """
+    Пытается найти ответ сначала по FAQ, если не найден — возвращает сообщение для передачи админу.
+    """
+    faq_answer = find_best_faq(query)
+    if faq_answer:
+        return faq_answer
+    return "Вибачте, я не знайшов відповіді. Ваше питання буде передано адміністратору."
 
 async def get_bot_reply(message: str) -> str:
     try:

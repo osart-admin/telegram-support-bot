@@ -1,14 +1,19 @@
 # bot/bot.py
 
 import os
+import aiohttp
+import asyncio
 from aiogram import Bot, Dispatcher, types
 from aiogram.enums import ParseMode
 from aiogram.types import FSInputFile
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.client.default import DefaultBotProperties
+
 from db_logger import log_message, create_or_update_thread, close_message_thread, save_faq
 from transcribe import transcribe_audio
+from faq_search import find_best_faq
+from fallback_chain import get_fallback_answer
 
 bot = Bot(
     token=os.getenv("TELEGRAM_TOKEN"),
@@ -29,8 +34,10 @@ async def handle_message(message: types.Message):
     thread_id = create_or_update_thread(user_id, user_text)
     log_message(user_id=user_id, message=user_text, direction="user", thread_id=thread_id)
 
-    # Здесь подставьте ответ ИИ или поиск по базе
-    response = f"Ваше сообщение: {user_text}"
+    # Сначала ищем в базе знаний, потом fallback
+    response = find_best_faq(user_text)
+    if not response:
+        response = get_fallback_answer(user_text)
 
     log_message(user_id=user_id, message=response, direction="admin", thread_id=thread_id)
 
@@ -38,7 +45,7 @@ async def handle_message(message: types.Message):
     kb = InlineKeyboardBuilder()
     kb.button(text="✅ Допомогло", callback_data=f"helped:{thread_id}")
     kb.button(text="❌ Не допомогло", callback_data=f"not_helped:{thread_id}")
-    await message.reply(response, reply_markup=kb.as_markup())
+    await message.reply(f"Ваше сообщение: {user_text}", reply_markup=kb.as_markup())
 
 @dp.message(lambda m: m.voice)
 async def handle_voice(message: types.Message):
@@ -47,9 +54,10 @@ async def handle_voice(message: types.Message):
     file_url = f"https://api.telegram.org/file/bot{bot.token}/{file_path}"
 
     tmp_ogg = f"/tmp/{message.voice.file_unique_id}.ogg"
-    async with bot.session.get(file_url) as response:
-        with open(tmp_ogg, "wb") as f:
-            f.write(await response.read())
+    async with aiohttp.ClientSession() as session:
+        async with session.get(file_url) as response:
+            with open(tmp_ogg, "wb") as f:
+                f.write(await response.read())
 
     text = transcribe_audio(tmp_ogg)
     os.remove(tmp_ogg)
@@ -57,8 +65,14 @@ async def handle_voice(message: types.Message):
     if not text:
         await message.reply("Пожалуйста, отправьте текстовое сообщение.")
     else:
-        message.text = text
-        await handle_message(message)
+        fake_message = types.Message.model_construct(
+            id=message.message_id,
+            date=message.date,
+            chat=message.chat,
+            from_user=message.from_user,
+            text=text
+        )
+        await handle_message(fake_message)
 
 @dp.callback_query(lambda c: c.data.startswith("helped"))
 async def handle_helped(callback_query: types.CallbackQuery):
@@ -72,5 +86,4 @@ async def handle_not_helped(callback_query: types.CallbackQuery):
     await bot.send_message(callback_query.from_user.id, "Ваш запит передано адміністратору. Очікуйте відповідь.")
 
 if __name__ == "__main__":
-    import asyncio
     asyncio.run(dp.start_polling(bot))

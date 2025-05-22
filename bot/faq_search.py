@@ -15,7 +15,7 @@ with open(INDEX_PATH, "rb") as f:
 
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
-def get_faq_answer(query: str) -> str | None:
+def find_best_faq(query: str) -> str | None:
     query_vec = model.encode([query])
     similarities = cosine_similarity(query_vec, embeddings)[0]
 

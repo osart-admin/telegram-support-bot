@@ -2,7 +2,6 @@ aiogram
 python-dotenv
 requests
 llama-cpp-python
-openai-whisper
 faster-whisper
 numpy
 scipy
@@ -11,10 +10,8 @@ sentence-transformers
 openai  # fallback
 sqlalchemy
 pymysql
-sentence-transformers
-faiss-cpu
 gpt4all
 scikit-learn
 mysqlclient
-ffmpeg-python
 aiohttp
+huggingface_hub[hf_xet]
