@@ -5,7 +5,6 @@ import pickle
 import mysql.connector
 from sentence_transformers import SentenceTransformer
 
-# Параметры подключения к MySQL
 DB = {
     "host": os.getenv("MYSQL_HOST", "localhost"),
     "user": os.getenv("MYSQL_USER", "root"),
@@ -17,29 +16,25 @@ DB = {
 OUTPUT = "/app/db/faq_index.pkl"
 os.makedirs("/app/db", exist_ok=True)
 
-# Загружаем модель
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
-# Получаем данные из MySQL
 conn = mysql.connector.connect(**DB)
 cursor = conn.cursor()
 cursor.execute("SELECT question, answer FROM supportapp_faq")
 rows = cursor.fetchall()
 conn.close()
 
-# Формируем списки для индексации
-pairs = []  # [(question, answer)]
-texts = []  # для embeddings
+questions = []
+answers = []
 
 for q, a in rows:
-    pairs.append((q.strip(), a.strip()))
-    texts.append(f"{q.strip()}\n{a.strip()}")
+    questions.append(q)
+    answers.append(a)
 
-# Векторизация
-embeddings = model.encode(texts, normalize_embeddings=True)
+embeddings = model.encode(questions, normalize_embeddings=True)
 
-# Сохраняем как (pairs, embeddings)
+# 💾 сохраняем как (questions, answers, embeddings)
 with open(OUTPUT, "wb") as f:
-    pickle.dump((pairs, embeddings), f)
+    pickle.dump((questions, answers, embeddings), f)
 
-print(f"[+] Saved {len(pairs)} FAQs to {OUTPUT}")
+print(f"[+] Saved {len(questions)} FAQs to {OUTPUT}")
