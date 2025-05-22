@@ -10,8 +10,7 @@ from aiogram.client.default import DefaultBotProperties
 
 from db_logger import log_message, create_or_update_thread, close_message_thread, save_faq
 from transcribe import transcribe_audio
-from faq_search import find_best_faq
-from fallback_chain import get_fallback_answer
+from fallback_chain import get_bot_reply
 
 bot = Bot(
     token=os.getenv("TELEGRAM_TOKEN"),
@@ -29,7 +28,6 @@ async def handle_voice(message: types.Message):
 
     tmp_ogg = f"/tmp/{message.voice.file_unique_id}.ogg"
 
-    # Используем aiohttp напрямую
     async with aiohttp.ClientSession() as session:
         async with session.get(file_url) as response:
             with open(tmp_ogg, "wb") as f:
@@ -42,39 +40,24 @@ async def handle_voice(message: types.Message):
         await message.reply("Пожалуйста, отправьте текстовое сообщение.")
         return
 
-    user_id = message.from_user.id
-    thread_id = create_or_update_thread(user_id, text)
-    log_message(user_id=user_id, message=text, direction="user", thread_id=thread_id)
-
-    response = find_best_faq(text)
-    if response is None:
-        response = get_fallback_answer(text)
-
-    log_message(user_id=user_id, message=response, direction="admin", thread_id=thread_id)
-
-    kb = InlineKeyboardBuilder()
-    kb.button(text="✅ Допомогло", callback_data=f"helped:{thread_id}")
-    kb.button(text="❌ Не допомогло", callback_data=f"not_helped:{thread_id}")
-    await message.reply(response, reply_markup=kb.as_markup())
+    await process_user_message(message.from_user.id, text, message)
 
 @dp.message(lambda m: m.text)
-async def handle_message(message: types.Message):
-    user_text = message.text
-    user_id = message.from_user.id
+async def handle_text(message: types.Message):
+    await process_user_message(message.from_user.id, message.text, message)
 
+async def process_user_message(user_id: int, user_text: str, message_obj: types.Message):
     thread_id = create_or_update_thread(user_id, user_text)
     log_message(user_id=user_id, message=user_text, direction="user", thread_id=thread_id)
 
-    response = find_best_faq(user_text)
-    if response is None:
-        response = get_fallback_answer(user_text)
+    response = await get_bot_reply(user_text)
 
     log_message(user_id=user_id, message=response, direction="admin", thread_id=thread_id)
 
     kb = InlineKeyboardBuilder()
     kb.button(text="✅ Допомогло", callback_data=f"helped:{thread_id}")
     kb.button(text="❌ Не допомогло", callback_data=f"not_helped:{thread_id}")
-    await message.reply(response, reply_markup=kb.as_markup())
+    await message_obj.reply(response, reply_markup=kb.as_markup())
 
 @dp.callback_query(lambda c: c.data.startswith("helped"))
 async def handle_helped(callback_query: types.CallbackQuery):
