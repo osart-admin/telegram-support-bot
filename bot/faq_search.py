@@ -9,18 +9,21 @@ from sklearn.metrics.pairwise import cosine_similarity
 INDEX_PATH = "/app/db/faq_index.pkl"
 THRESHOLD = 0.3  # минимальная близость для совпадения
 
-# Загружаем индекс и модель
+# Загружаем модель и индекс
+model = SentenceTransformer("all-MiniLM-L6-v2")
+
 with open(INDEX_PATH, "rb") as f:
-    questions, embeddings = pickle.load(f)
-    model = SentenceTransformer("all-MiniLM-L6-v2")
+    pairs, embeddings = pickle.load(f)
+    # pairs: list of (question, answer)
 
 def find_best_faq(query: str) -> str | None:
     query_vec = model.encode([query])
     similarities = cosine_similarity(query_vec, embeddings)[0]
 
-    best_match_idx = int(np.argmax(similarities))
-    best_score = similarities[best_match_idx]
+    best_idx = int(np.argmax(similarities))
+    best_score = similarities[best_idx]
 
     if best_score >= THRESHOLD:
-        return questions[best_match_idx]
+        question, answer = pairs[best_idx]
+        return f"[FAQ] {answer}"
     return None

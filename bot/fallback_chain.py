@@ -1,41 +1,35 @@
-# fallback_chain.py
+# bot/fallback_chain.py
+
 import os
 import asyncio
-from faq_search import find_best_faq
 from gpt4all import GPT4All
 import openai
+from faq_search import find_best_faq
 
-# Указываем точный путь к файлу
+# Инициализация модели GPT4All
+model_path = "/models"
+model_name = "mistral-7b.Q4_K_M"
+gpt4all_model = GPT4All(model_name=model_name, model_path=model_path, allow_download=False)
 
-gpt4all_model = GPT4All(
-    model_name="mistral-7b.Q4_K_M",                 # имя модели (без .gguf)
-    model_path="/models",                           # только путь до папки
-    allow_download=False
-)
-
+# Ключ OpenAI (если настроен)
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-def get_fallback_answer(query: str) -> str:
-    """
-    Пытается найти ответ сначала по FAQ, если не найден — возвращает сообщение для передачи админу.
-    """
-    faq_answer = find_best_faq(query)
-    if faq_answer:
-        return faq_answer
-    return "Вибачте, я не знайшов відповіді. Ваше питання буде передано адміністратору."
 
-async def get_bot_reply(message: str) -> str:
+async def get_fallback_answer(query: str) -> str:
+    # Сначала пробуем найти по FAQ (повторно, fallback на всякий случай)
     try:
-        faq_answer = await asyncio.to_thread(get_faq_answer, message)
+        faq_answer = find_best_faq(query)
         if faq_answer:
-            print("[DEBUG] FAQ match found")
-            return f"[FAQ] {faq_answer}"
+            return faq_answer
     except Exception as e:
-        print("[ERROR] FAQ search failed:", e)
+        print("[ERROR] FAQ fallback failed:", e)
 
+    # Пытаемся получить ответ от GPT4All
     try:
         local_response = await asyncio.to_thread(
-            gpt4all_model.generate, message, max_tokens=200
+            gpt4all_model.generate,
+            query,
+            max_tokens=200
         )
         if local_response and len(local_response.strip()) > 10:
             print("[DEBUG] GPT4All fallback used")
@@ -43,10 +37,12 @@ async def get_bot_reply(message: str) -> str:
     except Exception as e:
         print("[ERROR] GPT4All error:", e)
 
+    # Пытаемся получить ответ от OpenAI
     try:
-        completion = openai.ChatCompletion.create(
+        completion = await asyncio.to_thread(
+            openai.ChatCompletion.create,
             model="gpt-4",
-            messages=[{"role": "user", "content": message}],
+            messages=[{"role": "user", "content": query}],
             temperature=0.7,
         )
         print("[DEBUG] ChatGPT fallback used")
@@ -54,4 +50,4 @@ async def get_bot_reply(message: str) -> str:
     except Exception as e:
         print("[ERROR] OpenAI error:", e)
 
-    return "Извините, я не смог найти ответ на ваш вопрос."
+    return "Вибачте, я не знайшов відповіді. Ваше питання буде передано адміністратору."
