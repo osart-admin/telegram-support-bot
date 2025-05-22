@@ -50,10 +50,6 @@ media/
 # Transcribed audio files
 audio/
 
-# Auto-generated admin templates
-web/supportapp/templates/admin/supportapp/message_thread_change_form.html
-web/supportapp/templates/admin/supportapp/messagethread/change_form.html
-
 # Pytest or coverage
 htmlcov/
 .coverage
