@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FAQ</title>
+</head>
+<body>
+    <h2>База знаний</h2>
+    <p>Добро пожаловать, {{ user }}</p>
+    <h3>Список вопросов:</h3>
+    <ul>
+        {% for faq in faqs %}
+            <li><strong>Q:</strong> {{ faq[1] }}<br><strong>A:</strong> {{ faq[2] }}</li>
+        {% endfor %}
+    </ul>
+    <h3>Добавить:</h3>
+    <form method="post">
+        <input type="text" name="question" placeholder="Вопрос">
+        <input type="text" name="answer" placeholder="Ответ">
+        <button type="submit">Добавить</button>
+    </form>
+</body>
+</html>

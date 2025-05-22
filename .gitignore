@@ -1,0 +1,68 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment files
+.env
+.env.*
+
+# Virtual environments
+venv/
+.venv/
+
+# Logs & runtime
+*.log
+*.pid
+*.sqlite3
+*.db
+*.sock
+*.tmp
+/tmp/
+*.ogg
+*.wav
+
+# Docker-related
+*.pid
+*.sock
+db/
+*.pkl
+
+# Compiled files / bytecode
+*.so
+*.dll
+*.dylib
+*.exe
+*.class
+
+# Editor folders
+.vscode/
+.idea/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Django static and media
+staticfiles/
+media/
+
+# Transcribed audio files
+audio/
+
+# Auto-generated admin templates
+web/supportapp/templates/admin/supportapp/message_thread_change_form.html
+web/supportapp/templates/admin/supportapp/messagethread/change_form.html
+
+# Pytest or coverage
+htmlcov/
+.coverage
+.tox/
+.pytest_cache/
+
+# Migrations cache
+*/migrations/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db-journal

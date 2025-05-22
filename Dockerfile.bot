@@ -1,0 +1,21 @@
+FROM python:3.10-slim
+
+RUN apt update && apt install -y \
+    build-essential \
+    cmake \
+    curl \
+    git \
+    ffmpeg \
+    libsndfile1 \
+    default-libmysqlclient-dev \
+    pkg-config && \
+    pip install --upgrade pip
+
+WORKDIR /app
+
+COPY bot/ ./
+COPY requirements.bot.txt ./
+
+RUN pip install --upgrade pip && pip install -r requirements.bot.txt
+
+CMD ["python", "bot.py"]
