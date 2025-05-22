@@ -12,8 +12,7 @@ THRESHOLD = 0.7  # минимальная близость для совпаде
 # Загружаем индекс и модель
 with open(INDEX_PATH, "rb") as f:
     questions, embeddings = pickle.load(f)
-
-model = SentenceTransformer("all-MiniLM-L6-v2")
+    model = SentenceTransformer("all-MiniLM-L6-v2")
 
 def find_best_faq(query: str) -> str | None:
     query_vec = model.encode([query])
