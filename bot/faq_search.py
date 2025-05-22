@@ -7,7 +7,7 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
 INDEX_PATH = "/app/db/faq_index.pkl"
-THRESHOLD = 0.7  # минимальная близость для совпадения
+THRESHOLD = 0.3  # минимальная близость для совпадения
 
 # Загружаем индекс и модель
 with open(INDEX_PATH, "rb") as f:
