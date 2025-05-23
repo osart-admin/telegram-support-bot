@@ -9,13 +9,22 @@ logger = logging.getLogger(__name__)
 
 @admin.action(description="Отправить ответ пользователю")
 def reply_to_user(modeladmin, request, queryset):
+    from telegram import Bot
+
+    TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+    bot = Bot(token=TELEGRAM_TOKEN) if TELEGRAM_TOKEN else None
+
     for message in queryset:
-        if message.sender == "admin":
+        if message.sender == "admin" and bot:
             try:
-                messages.success(request, f"Сообщение {message.id} уже создано и будет доставлено сигналом.")
+                bot.send_message(
+                    chat_id=message.thread.user_id,
+                    text=f"✉️ Адміністратор відповів:\n\n{message.text}",
+                    parse_mode="HTML"
+                )
             except Exception as e:
                 logger.error(f"[Telegram Error] {e}")
-                messages.error(request, f"Ошибка при обработке: {e}")
+                messages.error(request, f"Ошибка при отправке Telegram: {e}")
 
 class MessageInline(admin.TabularInline):
     model = Message
@@ -33,21 +42,19 @@ class MessageThreadAdmin(admin.ModelAdmin):
 
     def response_change(self, request, obj):
         if "send_response" in request.POST:
-            try:
-                reply_text = request.POST.get("admin_reply", "").strip()
-                if not reply_text:
-                    messages.error(request, "Поле відповіді порожнє.")
-                    return super().response_change(request, obj)
+            reply_text = request.POST.get("admin_reply", "").strip()
+            if not reply_text:
+                messages.error(request, "Поле відповіді порожнє.")
+                return super().response_change(request, obj)
 
-                Message.objects.create(
-                    thread=obj,
-                    sender="admin",
-                    text=reply_text
-                )
-                messages.success(request, "Відповідь збережено та буде надіслана користувачу.")
-            except Exception as e:
-                logger.error("Ошибка при создании сообщения", exc_info=True)
-                messages.error(request, f"Внутрення помилка: {e}")
+            # Только создаём сообщение в БД — отправка произойдёт через сигнал post_save
+            Message.objects.create(
+                thread=obj,
+                sender="admin",
+                text=reply_text
+            )
+
+            messages.success(request, "Відповідь надіслана користувачу.")
         return super().response_change(request, obj)
 
 class MessageAdmin(admin.ModelAdmin):
