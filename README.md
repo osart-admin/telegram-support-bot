@@ -24,7 +24,7 @@ AI-бот службы поддержки с голосовыми сообщен
 ## 🚀 Развёртывание
 
 ```bash
-git clone https://github.com/your-org/telegram-support-bot.git
+git clone https://github.com/osart-admin/telegram-support-bot.git
 cd telegram-support-bot
 
 cp .env.example .env  # настрой переменные
