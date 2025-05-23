@@ -1,5 +1,6 @@
 # web/urls.py
-from django.http import JsonResponse
+
+from django.http import JsonResponse, HttpResponse
 from django.contrib import admin
 from django.urls import path
 
@@ -14,7 +15,11 @@ def debug_headers(request):
         "META": {k: v for k, v in request.META.items() if k.startswith("HTTP_") or k in ["REMOTE_ADDR", "SERVER_NAME", "SERVER_PORT"]}
     })
 
+def index(request):
+    return HttpResponse("OK", content_type="text/plain")
+
 urlpatterns = [
+    path("", index),
     path("debug/headers", debug_headers),
     path("admin/", admin.site.urls),
 ]
