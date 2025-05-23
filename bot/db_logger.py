@@ -64,17 +64,9 @@ def create_or_update_thread(user_id: int, message: str) -> int:
         conn.commit()
         thread_id = cursor.lastrowid
 
-    # Добавим сообщение
-    cursor.execute("""
-        INSERT INTO supportapp_message (thread_id, sender, text, created_at)
-        VALUES (%s, %s, %s, NOW())
-    """, (thread_id, "user", message))
-
-    conn.commit()
     cursor.close()
     conn.close()
     return thread_id
-
 
 def close_message_thread(thread_id: int, mark_as_faq: bool = False):
     conn = get_connection()
