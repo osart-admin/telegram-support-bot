@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # 🤖 Telegram Support Bot
 
 AI-бот службы поддержки с голосовыми сообщениями, умным поиском по FAQ, fallback-ответами от GPT4All или ChatGPT и веб-админкой на Django.
@@ -132,8 +131,3 @@ telegram-support-bot/
 	•	volume ./db:/app/db — хранение FAQ-индекса
 	•	volume ./audio:/app/audio — временные голосовые файлы
 	•	volume /opt/models:/models — gguf-модели для GPT4All
-<<<<<<< HEAD
-=======
-
-
->>>>>>> f8f13ce (Init: Build bot)
