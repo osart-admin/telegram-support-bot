@@ -1,8 +1,10 @@
 # web/urls.py
-
-from django.http import JsonResponse, HttpResponse
+import os
+from django.conf import settings
 from django.contrib import admin
+from django.http import JsonResponse, HttpResponse
 from django.urls import path
+from django.views.static import serve
 
 def debug_headers(request):
     import logging
@@ -18,7 +20,16 @@ def debug_headers(request):
 def index(request):
     return HttpResponse("OK", content_type="text/plain")
 
-urlpatterns = [
+# Favicon для DEBUG=True, чтобы не падало, если STATIC_ROOT не задан
+if settings.DEBUG:
+    FAVICON_PATH = os.path.join(settings.BASE_DIR, "static", "favicon.ico")
+    urlpatterns = [
+        path('favicon.ico', serve, {'path': FAVICON_PATH}),
+    ]
+else:
+    urlpatterns = []
+
+urlpatterns += [
     path("", index),
     path("debug/headers", debug_headers),
     path("admin/", admin.site.urls),

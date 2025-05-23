@@ -13,8 +13,8 @@ DB = {
     "port": int(os.getenv("MYSQL_PORT", "3306")),
 }
 
-OUTPUT = "/app/db/faq_index.pkl"
-os.makedirs("/app/db", exist_ok=True)
+OUTPUT = "/app/db/faq_index.pkl"  # или './db/faq_index.pkl'
+os.makedirs(os.path.dirname(OUTPUT), exist_ok=True)
 
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
@@ -30,6 +30,10 @@ answers = []
 for q, a in rows:
     questions.append(q)
     answers.append(a)
+
+print(f"[DEBUG] Всего вопросов для индексации: {len(questions)}")
+for i, q in enumerate(questions):
+    print(f"  {i+1}: {q}")
 
 embeddings = model.encode(questions, normalize_embeddings=True)
 

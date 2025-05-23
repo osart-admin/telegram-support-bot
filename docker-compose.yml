@@ -23,6 +23,7 @@ services:
       - ./web:/app
       - ./web/static:/static
       - ./bot/embeddings:/app/embeddings
+      - ./db:/app/db
     depends_on:
       - mysql
     restart: always
