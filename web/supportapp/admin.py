@@ -2,7 +2,6 @@
 
 from django.contrib import admin, messages
 from .models import MessageThread, Message, FAQ
-import os
 import logging
 
 logger = logging.getLogger(__name__)
@@ -26,7 +25,6 @@ class MessageThreadAdmin(admin.ModelAdmin):
     list_filter = ['status', 'resolved']
     inlines = [MessageInline]
     change_form_template = "admin/supportapp/message_thread_change_form.html"
-    actions = ["save_to_faq"]
 
     def response_change(self, request, obj):
         if "send_response" in request.POST:
@@ -42,18 +40,17 @@ class MessageThreadAdmin(admin.ModelAdmin):
             )
 
             messages.success(request, "Відповідь збережено.")
-        return super().response_change(request, obj)
 
-    @admin.action(description="📌 Зберегти в FAQ")
-    def save_to_faq(self, request, queryset):
-        for thread in queryset:
-            question = Message.objects.filter(thread=thread, sender="user").order_by("created_at").first()
-            answer = Message.objects.filter(thread=thread, sender="admin").order_by("-created_at").first()
+        if "add_to_faq" in request.POST:
+            question = Message.objects.filter(thread=obj, sender="user").order_by("created_at").first()
+            answer = Message.objects.filter(thread=obj, sender="admin").order_by("-created_at").first()
             if question and answer:
                 FAQ.objects.create(question=question.text, answer=answer.text)
                 messages.success(request, f"Додано в FAQ: «{question.text[:50]}...»")
             else:
-                messages.warning(request, f"Обговорення {thread.id} не має достатньо повідомлень для FAQ.")
+                messages.warning(request, f"Обговорення {obj.id} не має достатньо повідомлень для FAQ.")
+
+        return super().response_change(request, obj)
 
 class MessageAdmin(admin.ModelAdmin):
     list_display = ['id', 'thread', 'sender', 'text', 'created_at']

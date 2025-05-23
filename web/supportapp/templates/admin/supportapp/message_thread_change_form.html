@@ -16,12 +16,14 @@
     </div>
   {% endif %}
 
-  {% if original and not original.faq_added %}
-    <form method="post" style="margin-top: 2em;">
+  <div style="margin-top: 2em;">
+    <form method="post" style="display: inline;">
       {% csrf_token %}
-      <button type="submit" name="add_to_faq" class="button default" style="background-color: #f5e050; color: black; border: 1px solid #ccc;">
+      <input type="hidden" name="_continue" value="1">
+      <button type="submit" name="add_to_faq" class="button default"
+              style="background-color: #f5e050; color: black; border: 1px solid #ccc;">
         📌 Зберегти в FAQ
       </button>
     </form>
-  {% endif %}
+  </div>
 {% endblock %}

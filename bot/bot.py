@@ -60,7 +60,7 @@ async def handle_message_logic(message: types.Message, text: str):
     kb = InlineKeyboardBuilder()
     kb.button(text="✅ Допомогло", callback_data=f"helped:{thread_id}")
     kb.button(text="❌ Не допомогло", callback_data=f"not_helped:{thread_id}")
-    await message.reply(response, reply_markup=kb.as_markup())
+    await message.reply(response, reply_markup=kb.as_markup(), parse_mode=None)  # <-- fix здесь
 
 @dp.callback_query(lambda c: c.data.startswith("helped"))
 async def handle_helped(callback_query: types.CallbackQuery):
