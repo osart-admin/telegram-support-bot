@@ -7,9 +7,21 @@
   {% if original and not original.resolved %}
     <div class="admin-response-form" style="margin-top: 2em;">
       <h3>Відповідь адміністратору:</h3>
-      <textarea name="admin_reply" rows="4" style="width: 100%;" placeholder="Напишіть відповідь користувачу..."></textarea>
-      <br><br>
-      <button type="submit" name="send_response" class="button default">Відправити</button>
+      <form method="post">
+        {% csrf_token %}
+        <textarea name="admin_reply" rows="4" style="width: 100%;" placeholder="Напишіть відповідь користувачу..."></textarea>
+        <br><br>
+        <button type="submit" name="send_response" class="button default">Відправити</button>
+      </form>
     </div>
+  {% endif %}
+
+  {% if original and not original.faq_added %}
+    <form method="post" style="margin-top: 2em;">
+      {% csrf_token %}
+      <button type="submit" name="add_to_faq" class="button default" style="background-color: #f5e050; color: black; border: 1px solid #ccc;">
+        📌 Зберегти в FAQ
+      </button>
+    </form>
   {% endif %}
 {% endblock %}

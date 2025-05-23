@@ -22,6 +22,7 @@ services:
     volumes:
       - ./web:/app
       - ./web/static:/static
+      - ./bot/embeddings:/app/embeddings
     depends_on:
       - mysql
     restart: always

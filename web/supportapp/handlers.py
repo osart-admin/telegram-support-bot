@@ -17,25 +17,19 @@ def send_admin_response(sender, instance, created, **kwargs):
         return
 
     try:
-        if not bot:
+        if bot:
+            kb = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="✅ Допомогло", callback_data=f"helped:{instance.thread.id}")],
+                [InlineKeyboardButton(text="❌ Не допомогло", callback_data=f"not_helped:{instance.thread.id}")]
+            ])
+            bot.send_message(
+                chat_id=instance.thread.user_id,
+                text=f"✉️ Адміністратор відповів:\n\n{instance.text}",
+                reply_markup=kb,
+                parse_mode="HTML"
+            )
+            logger.info(f"[+] Ответ администратора отправлен пользователю {instance.thread.user_id}")
+        else:
             logger.warning("Telegram бот не настроен.")
-            return
-
-        # Кнопки
-        kb = InlineKeyboardMarkup(inline_keyboard=[
-            [
-                InlineKeyboardButton(text="✅ Допомогло", callback_data=f"helped:{instance.thread.id}"),
-                InlineKeyboardButton(text="❌ Не допомогло", callback_data=f"not_helped:{instance.thread.id}")
-            ]
-        ])
-
-        bot.send_message(
-            chat_id=instance.thread.user_id,
-            text=f"✉️ Адміністратор відповів:\n\n{instance.text}",
-            parse_mode="HTML",
-            reply_markup=kb
-        )
-        logger.info(f"[+] Ответ администратора отправлен пользователю {instance.thread.user_id}")
-
     except Exception as e:
         logger.error(f"[ERROR] Не удалось отправить сообщение: {e}", exc_info=True)

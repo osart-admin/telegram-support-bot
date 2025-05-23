@@ -1,3 +1,5 @@
+# web/supportapp/apps.py
+
 from django.apps import AppConfig
 
 class SupportappConfig(AppConfig):
@@ -6,3 +8,4 @@ class SupportappConfig(AppConfig):
 
     def ready(self):
         import supportapp.handlers
+        import supportapp.signals  # если добавляли сигнал автоперестроения FAQ
