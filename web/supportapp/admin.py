@@ -2,34 +2,16 @@
 
 from django.contrib import admin, messages
 from .models import MessageThread, Message, FAQ
-from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
 import os
 import logging
 
 logger = logging.getLogger(__name__)
 
-# Инициализация Telegram-бота
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-bot = Bot(token=TELEGRAM_TOKEN) if TELEGRAM_TOKEN else None
-
 @admin.action(description="Отправить ответ пользователю")
 def reply_to_user(modeladmin, request, queryset):
     for message in queryset:
-        if message.sender == "admin" and bot:
-            try:
-                kb = InlineKeyboardMarkup(inline_keyboard=[
-                    [InlineKeyboardButton(text="✅ Допомогло", callback_data=f"helped:{message.thread.id}")],
-                    [InlineKeyboardButton(text="❌ Не допомогло", callback_data=f"not_helped:{message.thread.id}")]
-                ])
-                bot.send_message(
-                    chat_id=message.thread.user_id,
-                    text=f"✉️ Адміністратор відповів:\n\n{message.text}",
-                    reply_markup=kb,
-                    parse_mode="HTML"
-                )
-            except Exception as e:
-                logger.error(f"[Telegram Error] {e}")
-                messages.error(request, f"Ошибка при отправке Telegram: {e}")
+        if message.sender == "admin":
+            messages.info(request, f"Ответ для {message.thread.user_id} уже был создан.")
 
 class MessageInline(admin.TabularInline):
     model = Message
@@ -59,38 +41,7 @@ class MessageThreadAdmin(admin.ModelAdmin):
                 text=reply_text
             )
 
-            if bot:
-                kb = InlineKeyboardMarkup(inline_keyboard=[
-                    [InlineKeyboardButton(text="✅ Допомогло", callback_data=f"helped:{obj.id}")],
-                    [InlineKeyboardButton(text="❌ Не допомогло", callback_data=f"not_helped:{obj.id}")]
-                ])
-                try:
-                    bot.send_message(
-                        chat_id=obj.user_id,
-                        text=f"✉️ Адміністратор відповів:\n\n{reply_text}",
-                        reply_markup=kb,
-                        parse_mode="HTML"
-                    )
-                    messages.success(request, "Відповідь надіслана користувачу.")
-                except Exception as e:
-                    logger.error(f"[Telegram Error] {e}")
-                    messages.error(request, f"❌ Не вдалося надіслати в Telegram: {e}")
-            else:
-                messages.warning(request, "Telegram бот не налаштований.")
-
-        elif "add_to_faq" in request.POST:
-            try:
-                question = Message.objects.filter(thread=obj, sender="user").order_by("created_at").first()
-                answer = Message.objects.filter(thread=obj, sender="admin").order_by("-created_at").first()
-                if question and answer:
-                    FAQ.objects.create(question=question.text, answer=answer.text)
-                    messages.success(request, "✅ Додано до FAQ.")
-                else:
-                    messages.error(request, "Неможливо знайти повідомлення користувача або адміністратора.")
-            except Exception as e:
-                logger.error("Ошибка при добавлении в FAQ", exc_info=True)
-                messages.error(request, f"❌ Помилка при збереженні в FAQ: {e}")
-
+            messages.success(request, "Відповідь збережено.")
         return super().response_change(request, obj)
 
     @admin.action(description="📌 Зберегти в FAQ")

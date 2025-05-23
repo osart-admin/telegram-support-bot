@@ -1,3 +1,5 @@
+# bot/embedding.py
+
 import os
 import faiss
 import pymysql
@@ -5,7 +7,18 @@ import numpy as np
 from sqlalchemy import create_engine
 from sentence_transformers import SentenceTransformer
 
-DB_URL = os.getenv("DB_URL", "mysql+pymysql://root:y72H8b8PT7EtdaZ9e3t49FUyARrc7sP6@mysql:3306/support")
+from dotenv import load_dotenv
+load_dotenv()
+
+# Подключение к БД через переменные окружения
+MYSQL_USER = os.getenv("MYSQL_USER", "root")
+MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "")
+MYSQL_HOST = os.getenv("MYSQL_HOST", "mysql")
+MYSQL_PORT = os.getenv("MYSQL_PORT", "3306")
+MYSQL_DATABASE = os.getenv("MYSQL_DATABASE", "support")
+
+DB_URL = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DATABASE}"
+
 model = SentenceTransformer("all-MiniLM-L6-v2")
 engine = create_engine(DB_URL)
 
