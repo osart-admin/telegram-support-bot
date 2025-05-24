@@ -1,10 +1,8 @@
 # web/urls.py
-import os
-from django.conf import settings
+
 from django.contrib import admin
-from django.http import JsonResponse, HttpResponse
 from django.urls import path
-from django.views.static import serve
+from django.http import JsonResponse, HttpResponse
 
 def debug_headers(request):
     import logging
@@ -20,17 +18,12 @@ def debug_headers(request):
 def index(request):
     return HttpResponse("OK", content_type="text/plain")
 
-# Favicon для DEBUG=True, чтобы не падало, если STATIC_ROOT не задан
-if settings.DEBUG:
-    FAVICON_PATH = os.path.join(settings.BASE_DIR, "static", "favicon.ico")
-    urlpatterns = [
-        path('favicon.ico', serve, {'path': FAVICON_PATH}),
-    ]
-else:
-    urlpatterns = []
-
-urlpatterns += [
+urlpatterns = [
     path("", index),
     path("debug/headers", debug_headers),
     path("admin/", admin.site.urls),
 ]
+
+# В режиме разработки Django сам отдаёт статику, favicon доступен по /static/favicon.ico
+# В HTML-шаблоне (base.html/admin/base_site.html) пропиши:
+# <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
