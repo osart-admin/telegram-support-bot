@@ -13,12 +13,19 @@ class FAQ(models.Model):
 
 class MessageThread(models.Model):
     user_id = models.BigIntegerField("Telegram ID пользователя")
+    username = models.CharField("Username", max_length=255, blank=True, null=True)
+    first_name = models.CharField("Имя", max_length=255, blank=True, null=True)
+    last_name = models.CharField("Фамилия", max_length=255, blank=True, null=True)
+    photo_url = models.URLField("Аватар", blank=True, null=True)
+    last_message_at = models.DateTimeField("Последнее сообщение", blank=True, null=True)
     status = models.CharField("Статус", max_length=255, default="новое")
     created_at = models.DateTimeField("Когда начато", auto_now_add=True)
     resolved = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"Обращение {self.pk} от {self.user_id}"
+        name = f"{self.first_name or ''} {self.last_name or ''}".strip()
+        uname = f"@{self.username}" if self.username else ""
+        return f"{name} {uname} ({self.user_id})" if name or uname else f"Обращение {self.pk} от {self.user_id}"
 
     class Meta:
         verbose_name = "Обращение"
@@ -29,7 +36,7 @@ class Message(models.Model):
         MessageThread,
         on_delete=models.CASCADE,
         related_name="messages",
-        null=True, blank=True  # добавлено временно
+        null=True, blank=True
     )
     sender = models.CharField(
         max_length=10,

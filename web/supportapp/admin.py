@@ -1,6 +1,5 @@
-# web/supportapp/admin.py
-
 from django.contrib import admin, messages
+from django.utils.html import format_html
 from .models import MessageThread, Message, FAQ
 import logging
 
@@ -20,11 +19,33 @@ class MessageInline(admin.TabularInline):
     ordering = ['created_at']
 
 class MessageThreadAdmin(admin.ModelAdmin):
-    list_display = ['id', 'user_id', 'status', 'created_at', 'resolved']
-    search_fields = ['user_id']
+    list_display = [
+        'id', 'user_id', 'full_name', 'username_display', 'avatar_preview',
+        'status', 'created_at', 'last_message_at', 'resolved'
+    ]
+    search_fields = ['user_id', 'username', 'first_name', 'last_name']
     list_filter = ['status', 'resolved']
     inlines = [MessageInline]
     change_form_template = "admin/supportapp/message_thread_change_form.html"
+
+    def full_name(self, obj):
+        return f"{obj.first_name or ''} {obj.last_name or ''}".strip()
+    full_name.short_description = "Имя и Фамилия"
+
+    def avatar_preview(self, obj):
+        if obj.photo_url:
+            return format_html('<img src="{}" width="32" height="32" style="border-radius:50%"/>', obj.photo_url)
+        return "-"
+    avatar_preview.short_description = "Аватар"
+
+    def username_display(self, obj):
+        return f"@{obj.username}" if obj.username else ""
+    username_display.short_description = "Username"
+
+    def last_message_at(self, obj):
+        return obj.last_message_at
+    last_message_at.admin_order_field = 'last_message_at'
+    last_message_at.short_description = "Последнее сообщение"
 
     def response_change(self, request, obj):
         if "send_response" in request.POST:

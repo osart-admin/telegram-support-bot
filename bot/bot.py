@@ -1,5 +1,3 @@
-# bot/bot.py
-
 import os
 import aiohttp
 from aiogram import Bot, Dispatcher, types
@@ -47,20 +45,26 @@ async def handle_message(message: types.Message):
     await handle_message_logic(message, message.text)
 
 async def handle_message_logic(message: types.Message, text: str):
-    user_id = message.from_user.id
-    thread_id = create_or_update_thread(user_id, text)
-    log_message(user_id=user_id, message=text, direction="user", thread_id=thread_id)
+    user = message.from_user
+    user_data = {
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "username": user.username,
+        "photo_url": f"https://t.me/i/userpic/320/{user.username}.jpg" if user.username else None
+    }
+    thread_id = create_or_update_thread(user.id, text, user_data=user_data)
+    log_message(user_id=user.id, message=text, direction="user", thread_id=thread_id)
 
     response = find_best_faq(text)
     if response is None:
         response = await get_fallback_answer(text)
 
-    log_message(user_id=user_id, message=response, direction="admin", thread_id=thread_id)
+    log_message(user_id=user.id, message=response, direction="admin", thread_id=thread_id)
 
     kb = InlineKeyboardBuilder()
     kb.button(text="✅ Допомогло", callback_data=f"helped:{thread_id}")
     kb.button(text="❌ Не допомогло", callback_data=f"not_helped:{thread_id}")
-    await message.reply(response, reply_markup=kb.as_markup(), parse_mode=None)  # <-- fix здесь
+    await message.reply(response, reply_markup=kb.as_markup(), parse_mode=None)
 
 @dp.callback_query(lambda c: c.data.startswith("helped"))
 async def handle_helped(callback_query: types.CallbackQuery):
@@ -71,7 +75,6 @@ async def handle_helped(callback_query: types.CallbackQuery):
 @dp.callback_query(lambda c: c.data.startswith("not_helped"))
 async def handle_not_helped(callback_query: types.CallbackQuery):
     thread_id = int(callback_query.data.split(":")[1])
-    # можно логировать как "потребуется ручная доработка"
     await bot.send_message(callback_query.from_user.id, "Ваш запит передано адміністратору. Очікуйте відповідь.")
 
 if __name__ == "__main__":

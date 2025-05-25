@@ -1,2 +1,4 @@
 .env
 db/faq_index.pkl
+.git
+.gitignore
