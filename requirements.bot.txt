@@ -1,4 +1,5 @@
 aiogram
+openai>=1.0.0
 python-dotenv
 requests
 llama-cpp-python
@@ -7,12 +8,11 @@ numpy
 scipy
 faiss-cpu
 sentence-transformers
-openai  # fallback
 sqlalchemy
 pymysql
-gpt4all
 scikit-learn
 mysqlclient
 aiohttp
 huggingface_hub[hf_xet]
 mysql-connector-python
+

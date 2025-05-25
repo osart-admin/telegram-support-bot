@@ -8,8 +8,8 @@ RUN apt update && apt install -y \
     ffmpeg \
     libsndfile1 \
     default-libmysqlclient-dev \
-    pkg-config && \
-    pip install --upgrade pip
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -18,4 +18,4 @@ COPY requirements.bot.txt ./
 
 RUN pip install --upgrade pip && pip install -r requirements.bot.txt
 
-CMD ["python", "bot.py"]
+CMD ["python", "main.py"]
