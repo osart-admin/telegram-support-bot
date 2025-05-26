@@ -6,7 +6,7 @@
 
   {% if original and not original.resolved %}
     <div class="admin-response-form" style="margin-top: 2em;">
-      <h3>Відповідь адміністратору:</h3>
+      <h3>Відповідь адміністратора:</h3>
       <form method="post">
         {% csrf_token %}
         <textarea name="admin_reply" rows="4" style="width: 100%;" placeholder="Напишіть відповідь користувачу..."></textarea>

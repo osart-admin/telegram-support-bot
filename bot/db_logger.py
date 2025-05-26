@@ -1,5 +1,3 @@
-# bot/db_logger.py
-
 import os
 import MySQLdb
 from dotenv import load_dotenv
@@ -14,10 +12,8 @@ DB_CONFIG = {
     "charset": "utf8mb4",
 }
 
-
 def get_connection():
     return MySQLdb.connect(**DB_CONFIG)
-
 
 def log_message(user_id: int, message: str, direction: str, thread_id: int):
     conn = get_connection()
@@ -30,7 +26,6 @@ def log_message(user_id: int, message: str, direction: str, thread_id: int):
     cursor.close()
     conn.close()
 
-
 def update_message_status(thread_id: int, status: str):
     conn = get_connection()
     cursor = conn.cursor()
@@ -41,12 +36,9 @@ def update_message_status(thread_id: int, status: str):
     cursor.close()
     conn.close()
 
-
-def create_or_update_thread(user_id: int, message: str) -> int:
+def create_or_update_thread(user_id: int, message: str, user_data: dict = None) -> int:
     conn = get_connection()
     cursor = conn.cursor()
-
-    # Найдём активный тред
     cursor.execute("""
         SELECT id FROM supportapp_messagethread
         WHERE user_id = %s AND resolved = FALSE
@@ -54,13 +46,28 @@ def create_or_update_thread(user_id: int, message: str) -> int:
     """, (user_id,))
     result = cursor.fetchone()
 
+    if user_data:
+        first_name = user_data.get("first_name")
+        last_name = user_data.get("last_name")
+        username = user_data.get("username")
+        photo_url = user_data.get("photo_url")
+    else:
+        first_name = last_name = username = photo_url = None
+
     if result:
         thread_id = result[0]
+        cursor.execute("""
+            UPDATE supportapp_messagethread
+            SET first_name = %s, last_name = %s, username = %s, photo_url = %s, last_message_at = NOW()
+            WHERE id = %s
+        """, (first_name, last_name, username, photo_url, thread_id))
+        conn.commit()
     else:
         cursor.execute("""
-            INSERT INTO supportapp_messagethread (user_id, status, created_at, resolved)
-            VALUES (%s, %s, NOW(), FALSE)
-        """, (user_id, "новое"))
+            INSERT INTO supportapp_messagethread
+            (user_id, first_name, last_name, username, photo_url, last_message_at, status, created_at, resolved)
+            VALUES (%s, %s, %s, %s, %s, NOW(), %s, NOW(), FALSE)
+        """, (user_id, first_name, last_name, username, photo_url, "новое"))
         conn.commit()
         thread_id = cursor.lastrowid
 
@@ -71,34 +78,12 @@ def create_or_update_thread(user_id: int, message: str) -> int:
 def close_message_thread(thread_id: int, mark_as_faq: bool = False):
     conn = get_connection()
     cursor = conn.cursor()
-
     cursor.execute("""
         UPDATE supportapp_messagethread SET resolved = TRUE, status = 'закрыто' WHERE id = %s
     """, (thread_id,))
-
-    if mark_as_faq:
-        cursor.execute("""
-            SELECT text FROM supportapp_message
-            WHERE thread_id = %s AND sender = 'user'
-            ORDER BY created_at ASC LIMIT 1
-        """, (thread_id,))
-        question = cursor.fetchone()
-        cursor.execute("""
-            SELECT text FROM supportapp_message
-            WHERE thread_id = %s AND sender = 'admin'
-            ORDER BY created_at DESC LIMIT 1
-        """, (thread_id,))
-        answer = cursor.fetchone()
-
-        if question and answer:
-            cursor.execute("""
-                INSERT INTO supportapp_faq (question, answer) VALUES (%s, %s)
-            """, (question[0], answer[0]))
-
     conn.commit()
     cursor.close()
     conn.close()
-
 
 def save_faq(question: str, answer: str):
     conn = get_connection()
